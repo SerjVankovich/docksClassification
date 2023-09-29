@@ -2,6 +2,7 @@ import string
 import re
 
 import nltk
+nltk.download('wordnet')
 
 
 def read_text(path: str):
@@ -23,4 +24,8 @@ def replace_time_label(sentence: str):
 
 def process_sentence(sentence: str):
     sentence = replace_time_label(sentence)
-    return sentence.translate(str.maketrans('', '', string.punctuation))
+    sentence = sentence.translate(str.maketrans('', '', string.punctuation))
+
+    words = nltk.word_tokenize(sentence, 'russian')
+    lemmatizer = nltk.stem.WordNetLemmatizer()
+    return [lemmatizer.lemmatize(word) for word in words]
