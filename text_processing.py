@@ -1,31 +1,40 @@
 import string
-import re
+
+from nltk.corpus import stopwords
+from pymystem3 import Mystem
 
 import nltk
-nltk.download('wordnet')
+
+mystem = Mystem()
+russian_stopwords = stopwords.words("russian")
 
 
 def read_text(path: str):
     with open(path, encoding='utf-8') as file:
-        return file.read()
+        lines = [line for line in file.readlines() if line != '\n']
+        return lines
 
 
-def tokenize(text: str):
-    text = text.replace('\n\n', '. ')
+def tokenize(lines: list):
+    result_sentences = []
+    for line in lines:
+        sentences = nltk.sent_tokenize(line, language='russian')
+        result_sentences = result_sentences + sentences
+    result_sentences = [process_sentence(sentence) for sentence in result_sentences]
+    return result_sentences
 
-    sentences = nltk.sent_tokenize(text, language='russian')
-    sentences = [process_sentence(sentence) for sentence in sentences]
-    print(sentences)
 
-
-def replace_time_label(sentence: str):
-    return re.sub(r'^\[\d\d:\d\d]', '', sentence).strip()
+def letters_not_punktuation(word):
+    for letter in word:
+        if letter in string.punctuation:
+            return False
+    return True
 
 
 def process_sentence(sentence: str):
-    sentence = replace_time_label(sentence)
-    sentence = sentence.translate(str.maketrans('', '', string.punctuation))
+    words = mystem.lemmatize(sentence)
 
-    words = nltk.word_tokenize(sentence, 'russian')
-    lemmatizer = nltk.stem.WordNetLemmatizer()
-    return [lemmatizer.lemmatize(word) for word in words]
+    return [word.strip() for word in words if word not in russian_stopwords
+            and word not in [' ', '\n']
+            and word.strip() not in string.punctuation
+            and letters_not_punktuation(word)]
